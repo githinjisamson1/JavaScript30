@@ -1,23 +1,134 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Type Ahead 👀</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="https://fav.farm/🔥" />
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Type Ahead 👀</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" href="https://fav.farm/🔥" />
+  </head>
+  <body>
+    <form class="search-form">
+      <input type="text" class="search" placeholder="City or State" />
+      <ul class="suggestions">
+        <li>Filter for a city</li>
+        <li>or a state</li>
+      </ul>
+    </form>
+    <script>
+      // endpoint to fetch data
+      const endpoint =
+        "https://gist.githubusercontent.com/Miserlou/c5cd8364bf9b2420bb29/raw/2bf258763cdddd704f8ffd3ea9a3e81d25e2c6f6/cities.json";
 
-  <form class="search-form">
-    <input type="text" class="search" placeholder="City or State">
-    <ul class="suggestions">
-      <li>Filter for a city</li>
-      <li>or a state</li>
-    </ul>
-  </form>
-<script>
-const endpoint = 'https://gist.githubusercontent.com/Miserlou/c5cd8364bf9b2420bb29/raw/2bf258763cdddd704f8ffd3ea9a3e81d25e2c6f6/cities.json';
+      // initialize cities
+      const cities = [];
 
-</script>
-</body>
+      function displayMatches(match, value) {
+        // grab ul container
+        const ulSuggestions = document.querySelector(".suggestions");
+
+        // give way for other matches
+        ulSuggestions.innerHTML = "";
+
+        // iterate match/can use map().join("")
+        match.forEach((place) => {
+          const regex = new RegExp(value, "gi");
+
+          // highlighting regex in yellow
+          const cityName = place.city.replace(
+            regex,
+            `<span class="hl">${value}</span>       `
+          );
+
+          const stateName = place.state.replace(
+            regex,
+            `<span class="hl">${value}</span>       `
+          );
+
+          // create li for each place
+          const liPlace = document.createElement("li");
+
+          // manipulate dom
+          liPlace.innerHTML = `
+          <span>${cityName}, ${stateName}</span>
+          <span class="population">${place.population}</span>          
+          `;
+
+          // attach each li to ul container
+          ulSuggestions.appendChild(liPlace);
+        });
+      }
+
+      function handleSearchInput(e) {
+        const match = findMatch(e.target.value);
+
+        // invoke upon finding match(es)
+        displayMatches(match, e.target.value);
+      }
+
+      function findMatch(searchValue) {
+        return cities.filter((place) => {
+          // does city or state match: (pattern, flags)
+          // g: global, i: case-insensitive
+          const regex = new RegExp(searchValue, "gi");
+
+          return place.city.match(regex) || place.state.match(regex);
+        });
+      }
+
+      function handleSearchForm(e) {
+        // prevent default refresh behavior
+        e.preventDefault();
+        console.log(e.target)
+
+        // access user input box value
+        const searchValue = document.querySelector(".search").value;
+
+        // invoke
+        displayMatches(findMatch(searchValue), searchValue);
+      }
+
+      function fetchData() {
+        // fetch API - all
+        fetch(endpoint)
+          .then((response) => {
+            // blob
+            return response.json();
+          })
+          .then((data) => {
+            // fill cities array using spread operator
+            cities.push(...data);
+          })
+          .catch((err) => {
+            console.log(err.message);
+          });
+      }
+
+      function handleDOMContentLoaded(e) {
+        // grab elements
+        const searchForm = document.querySelector(".search-form");
+        const searchInput = document.querySelector(".search");
+
+        // get data
+        fetchData();
+
+        // form submission
+        searchForm.addEventListener("submit", (e) => {
+          handleSearchForm(e);
+        });
+
+        // click in-out  input box
+        searchInput.addEventListener("change", (e) => {
+          handleSearchInput(e);
+        });
+
+        // upon pressing keys
+        searchInput.addEventListener("keyup", (e) => {
+          handleSearchInput(e);
+        });
+      }
+
+      // wait HTML to load first
+      document.addEventListener("DOMContentLoaded", handleDOMContentLoaded);
+    </script>
+  </body>
 </html>
